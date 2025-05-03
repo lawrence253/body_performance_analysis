@@ -1,5 +1,5 @@
 
-# 📊 Statistical Processing Project — [Group_10]_Project_Final_03
+# 📊 Statistical Processing Project
 
 This project is a comprehensive statistical analysis of the `bodyPerformance.csv` dataset. It includes data preprocessing, descriptive statistics, exploratory data analysis, and machine learning modeling using R.
 
