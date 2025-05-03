@@ -90,4 +90,4 @@ Or open the Rmd file in RStudio and click **"Knit"** to render the report as HTM
 
 ## 📬 Contact
 
-For questions or collaboration inquiries, please contact **Group 10**.
+For questions or collaboration inquiries, please contact **me**.
