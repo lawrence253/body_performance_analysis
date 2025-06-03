@@ -12,77 +12,35 @@ library(tidymodels)
 library(VIM)
 library(lmPerm)
 
-## Đọc data
 data <- read.csv("bodyPerformance.csv")
 data <- clean_names(data)
 
-## **Các thống kê mô tả cho bộ dữ liệu**
-
-### Kiểm tra cấu trúc của dữ liệu
-
- 
 dim(data)
 glimpse(data)
-  
 
-### Thống kê mô tả cho dữ liệu
 
- 
 summary(data)
-  
-
-### Định nghĩa các biến định lượng và định tính
-
  
 numerical_features <- c("age", "height_cm", "weight_kg", "body_fat", "diastolic", "systolic",
                         "grip_force", "sit_and_bend_forward_cm", "sit_ups_counts",
                         "broad_jump_cm")
 
 categorical_features <- c("gender", "class")
-  
-
-------------------------------------------------------------------------
-
-## **Tiền xử lý dữ liệu**
-
-### Kiểm tra dữ liệu khuyết
-
  
 na_percentage <- colSums(is.na(data)) / nrow(data) * 100
 na_percentage
 
 aggr(data, ylab = c("Proportion of missings", "Pattern"), number = TRUE,
 cex.axis = 0.6, cex.numbers = 0.5)
-  
-
--   Nhận xét nhanh: Không có dữ liệu bị thiếu
-
-### Kiểm tra trùng lắp dữ liệu
-
  
 sum(duplicated(data))
 data[duplicated(data), ]
-  
-
--   Có 1 dòng dữ liệu trùng lặp
--   Với chỉ 1 dòng dữ liệu trùng lặp, tác động lên phân tích tổng thể có thể không đáng kể. Tuy nhiên, việc giữ lại các dòng trùng lặp có thể dẫn đến sự thiên lệch nhẹ trong các thống kê mô tả hoặc mô hình hóa.
-
-#### Xóa dữ liệu trùng lặp
-
  
 data <- data[!duplicated(data), ]
 
-# Kiểm tra kích thước dữ liệu sau khi xóa
 dim(data)
 
-# Kiểm tra lại số lượng hàng lặp
 sum(duplicated(data))
-  
-
-### Kiểm tra dữ liệu ngoại lai
-
-  {r, fig.width=15, fig.height=12}
-boxplot_list <- list()
 
 for (feature in numerical_features) {
   p <- ggplot(data, aes(x = "", y = .data[[feature]])) +
@@ -101,7 +59,6 @@ for (feature in numerical_features) {
   boxplot_list[[feature]] <- p
 }
 
-
 grid.arrange(
   grobs = boxplot_list, 
   ncol = 3, 
@@ -113,14 +70,6 @@ grid.arrange(
   padding = unit(2, "line")  
 )
   
-
--   Nhận xét nhanh:
-    -   Đa số các biến đều có giá trị ngoại lai
-    -   Đặc biệt các biển diastolic, systolic, body_fat, sit_and_bend_forward_cm có giá trị ngoại lai không hợp lý với thực thế
-    -   Xem xét xóa bỏ giá trị ngoại lai hoặc thay thế
-
-#### Xử lý dữ liệu ngoại lai
-
  
 # Hàm loại bỏ outliers dựa trên IQR
 remove_outliers <- function(column) {
@@ -167,12 +116,6 @@ for (feature in c("diastolic", "systolic", "sit_and_bend_forward_cm", "body_fat"
       theme_minimal()
   )
 }
-  
-
-## **Visualize dữ liệu đã được làm sạch**
-
-### Biểu đồ cho "gender" và "class"
-
  
 ggplot(data, aes(x = gender)) +
   geom_bar(fill = "blue") +
@@ -181,8 +124,6 @@ ggplot(data, aes(x = gender)) +
   labs(title = "Gender Distribution", x = "Gender", y = "Count") +
   theme_minimal() +
   theme(plot.title = element_text(size = 15, face = "bold"))
-  
-
  
 ggplot(data, aes(x = class)) +
   geom_bar(fill = "blue") +
@@ -192,18 +133,7 @@ ggplot(data, aes(x = class)) +
   theme_minimal() +
   theme(plot.title = element_text(size = 15, face = "bold"))
 
-  
-
- 
-table( data$class)
-  
-
--   Thông qua biểu đồ với dữ liệu đã được xử lý, có sự mất cân bằng ở class D so với các class còn lại.
-
-### Biểu đồ tần số và ước lượng hàm mật độ xác suất của từng biến định lượng
-
-  {r, fig.width=15, fig.height=12}
-hist_plots <- list()
+table(data$class)
 
 for (var in numerical_features) {
   p <- ggplot(data, aes(x = .data[[var]])) +
@@ -240,22 +170,15 @@ grid.arrange(
 
 ### Phân tích tương quan
 
- 
 numeric_df <- data[, numerical_features]
 cor_body <- cor(numeric_df, method = "pearson")
 cor_body
-  
-
- 
 corrplot(cor_body)
   
-
 ## Thực hiện một số kiểm định
 
 ### Biểu đồ kết hợp boxplot và violin plot cho các biến
 
-  {r, fig.width=15, fig.height=12}
-violin_box_list <- list()
 
 for(var in numerical_features) {
   violin_box_list[[var]] <- ggplot(data, aes(x = class, y = .data[[var]], fill = class)) +
@@ -328,34 +251,7 @@ anova_summary <- data.frame(
     stringsAsFactors = FALSE
 )
 
-  
-
--   Tất cả các biến đều có p-value rất nhỏ, cho thấy sự khác biệt có ý nghĩa thống kê.
-
--   **Phân tích theo nhóm chỉ số**:
-
-    -   **Chỉ số sức mạnh** (grip_force, broad_jump_cm):
-
-        -   Có sự phân biệt rõ rệt giữa các class
-
-        -   Class A và B thể hiện ưu thế vượt trội
-
--   **Chỉ số sức bền** (sit_ups_counts):
-
-    -   Sự khác biệt tăng dần theo class
-
-    -   Class A thể hiện khả năng vượt trội đáng kể
-
--   **Chỉ số thể trạng** (body_fat, weight_kg):
-
-    -   Có xu hướng giảm dần từ class D đến A
-
-    -   Class A có tỷ lệ mỡ cơ thể thấp nhất
-
-**Ý nghĩa**: - Các chỉ số thể chất đều có vai trò quan trọng trong việc phân loại hiệu suất - Sức mạnh và sức bền là yếu tố phân biệt rõ rệt nhất giữa các class - Thể trạng (đặc biệt là tỷ lệ mỡ cơ thể) có ảnh hưởng đáng kể đến hiệu suất - Các chỉ số sức khỏe (huyết áp) tuy ít ảnh hưởng hơn nhưng vẫn có ý nghĩa thống kê
-
 #### Phân tích đặc điểm nhóm hiệu suất cao (Class A)
-
  
 # So sánh các chỉ số giữa Class A và các class khác
 class_comparison <- data %>%
@@ -429,27 +325,6 @@ performance_stats <- data %>%
 print("\nThống kê theo giới tính và class:")
 print(performance_stats)
 
-  
-
-**Nhận xét:**
-
-1.  **Vai trò của giới tính trong hiệu suất thể chất**:
-    -   Giới tính là yếu tố có ảnh hưởng mạnh đến tất cả các chỉ số thể chất.
-    -   Tất cả các p-value \< 2.2e-16, cho thấy sự khác biệt giữa nam và nữ là rất có ý nghĩa thống kê.
-    -   Nam giới thường có ưu thế về mặt thể chất, đặc biệt trong các chỉ số như lực nắm tay và nhảy xa.
-2.  **Sự phân hóa theo class hiệu suất**:
-    -   Có sự khác biệt rõ rệt giữa các class về mọi chỉ số thể chất.
-    -   Class càng cao, khoảng cách về thể lực giữa nam và nữ càng lớn.
-    -   Class A nổi bật với các chỉ số thể lực vượt trội và tỷ lệ mỡ cơ thể thấp.
-3.  **Mối tương tác giữa giới tính và class**:
-    -   Sự khác biệt nam-nữ không đồng đều giữa các class.
-    -   Ở class càng cao, sự chênh lệch về thể lực giữa nam và nữ càng rõ rệt.
-    -   Điều này gợi ý rằng nam và nữ có thể cần các chương trình tập luyện khác nhau để phát triển tối ưu.
-4.  **Ý nghĩa thực tiễn**:
-    -   Cần xây dựng chương trình tập luyện riêng biệt cho nam và nữ.
-
-------------------------------------------------------------------------
-
 ## **Model**
 
 Hàm đánh giá mô hình
@@ -485,11 +360,8 @@ eval_multi_class <- function(x) {
   ))
 }
 
-  
-
 ### Chia bộ dữ liệu
 
- 
 set.seed(123)
 split <- initial_split(data, prop = 0.8, strata = class)
 train <- training(split)
@@ -499,9 +371,6 @@ test <- testing(split)
 cat("Train size: ", dim(train), "\n")
 cat("Test size: ", dim(test), "\n")
 
-  
-
- 
 # Kiểm tra kiểu dữ liệu ban đầu
 str(train$class)
 str(test$class)
@@ -521,9 +390,7 @@ test <- test %>%
 str(train$class)
 str(test$class)
   
-
 ### Thực hiện cân bằng dữ liệu với SMOTE
-
  
 library(themis)
 library(recipes)
@@ -563,24 +430,16 @@ p2 <- ggplot(data_balanced, aes(x = class)) +
 # Hiển thị cả hai biểu đồ
 library(gridExtra)
 grid.arrange(p1, p2, ncol = 2)
-
 summary(data_balanced)
-
-
 data <- data_balanced
-
-  
 
 ### Multinomial Logistic Regression
 
 #### Huấn luyện mô hình Multinomial Logistic Regression cơ bản
 
- 
 multinom_model <- multinom(class ~ ., data = train, maxit = 100)
 pred <-  predict(multinom_model, newdata = test, type = "class")
 head(pred)
-  
-
  
 # Tạo confusion matrix từ dự đoán
 multinom_conf_mat <- tibble(
@@ -598,9 +457,7 @@ autoplot(multinom_conf_mat, type = "heatmap") +
   scale_fill_gradient(low = "white", high = "steelblue") +
   labs(title = "Confusion Matrix - Multinomial Logistic Regression")
   
-
 #### Huấn luyện mô hình Multinomial Logistic Regression với biển đổi tương tác, log, square
-
  
 multinom_model_simplified <- multinom(
   class ~ gender + age + diastolic + systolic + height_cm +
@@ -615,9 +472,6 @@ multinom_model_simplified <- multinom(
 pred_simplified <- predict(multinom_model_simplified, newdata = test, type = "class")
 head(pred_simplified)
   
-
- 
-
 # Confusion Matrix
 multinom_conf_mat_simplified <- tibble(
   truth = test$class,
@@ -635,18 +489,13 @@ autoplot(multinom_conf_mat_simplified, type = "heatmap") +
   scale_fill_gradient(low = "white", high = "steelblue") +
   labs(title = "Confusion Matrix - Simplified Multinomial Model")
 
-  
-
 ### Huấn luyện mô hình Random Forest
 
- 
 library(randomForest)
 rf_model <- randomForest(class ~ ., data = train)
 pred_rf <- predict(rf_model, newdata = test, type = "class")
 head(pred_rf)
   
-
- 
 # Confusion Matrix
 rf_conf_mat <- tibble(
   truth = test$class,
@@ -665,10 +514,8 @@ autoplot(rf_conf_mat, type = "heatmap") +
   scale_fill_gradient(low = "white", high = "steelblue") +
   labs(title = "Confusion Matrix - Random Forest")
   
-
 ### Huấn luyện mô hình XGBoost
 
- 
 library(xgboost)
 
 # Chuẩn bị dữ liệu
@@ -703,8 +550,6 @@ pred_xgb_num <- predict(xgb_model, test_matrix)
 # Chuyển đổi dự đoán về dạng factor với thứ tự đúng
 pred_xgb <- factor(pred_xgb_num, levels = 0:3, labels = c("A", "B", "C", "D"))
   
-
- 
 # Confusion Matrix
 xgb_conf_mat <- tibble(
   truth = test$class,
@@ -779,4 +624,3 @@ importance_matrix <- xgb.importance(
 )
 xgb.plot.importance(importance_matrix, top_n = 10,
                    main = "Feature Importance - XGBoost")
-  
