@@ -88,6 +88,6 @@ Or open the Rmd file in RStudio and click **"Knit"** to render the report as HTM
 
 ---
 
-## 📬 Contact
+## 📄 License
 
-For questions or collaboration inquiries, please contact **me**.
+This project is created for educational purposes only
